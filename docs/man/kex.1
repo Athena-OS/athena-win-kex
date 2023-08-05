@@ -1,23 +1,23 @@
 .TH KEX "1" "May 2022" "Win-KeX 3.1" "User Commands"
 .SH NAME
-kex \- manual page for Win-KeX (Kali Desktop Experience for Windows)
+kex \- manual page for Win-KeX (Athena OS Experience for Windows based on Kali Linux)
 .SH SYNOPSYS
 kex [mode] [command] [parameters]
 .SH DESCRIPTION
 .SS
 Overview:
-Win\-KeX provides a GUI desktop environment for Kali Linux in Windows Subsystem for Linux 2 (WSL 2).
+Win\-KeX provides a GUI desktop environment for Athena OS in Windows Subsystem for Linux 2 (WSL 2).
 .br 
 Win\-KeX supports three modes:
 .TP
 \fBWindow Mode  (kex)\fR
-Kali desktop in a dedicated window using VNC technologies.
+Athena desktop in a dedicated window using VNC technologies.
 .TP
 \fBEnhanced Session Mode (kex --esm)\fR
-Kali desktop in a dedicated window using RDP protocol.
+Athena desktop in a dedicated window using RDP protocol.
 .TP
 \fBSeemless mode (kex --sl)\fR
-Windows desktop is seemlessly shared between Kali and Windows applications via a Windows X Server.
+Windows desktop is seemlessly shared between Athena and Windows applications via a Windows X Server.
 .br
 .P
 All modes support sound when launched with the
@@ -37,14 +37,14 @@ Disconnect: Press \fBF8\fR and choose \fBExit viewer\fR. The server session rema
 Stop: To stop the Win-KeX session, run \fBkex --stop\fR.
 .TP
 Win\-KeX Seemless Mode
-Start: run \fBkex --sl\fR to start KeX in seemless mode. The Kali Linux panel will pop up on top of the screen. Use the \fB-s\fR parameter to enable sound support. During the first launch, Win-KeX waits for the xfce desktop to start before it can enable the seemless mode, which usually takes less than 20 seconds. In the unlikely event that the startup exceeds 100 seconds on very slow machines, Win-KeX will time out and the Kali desktop might appear. If that ever happens, just use the \fB-w\fR or \fB--wait\fR argument to increase the timeout.
+Start: run \fBkex --sl\fR to start KeX in seemless mode. The Athena OS panel will pop up on top of the screen. Use the \fB-s\fR parameter to enable sound support. During the first launch, Win-KeX waits for the xfce desktop to start before it can enable the seemless mode, which usually takes less than 20 seconds. In the unlikely event that the startup exceeds 100 seconds on very slow machines, Win-KeX will time out and the Athena desktop might appear. If that ever happens, just use the \fB-w\fR or \fB--wait\fR argument to increase the timeout.
 .br
 Stop: Use the standard \fBlogout\fR workflow to exit the Win\-KeX session. To kill the Windows X Server, type \fBkex --sl --stop\fR.
 .IP
 \fBTip:\fR Enabling \fBAutohide\fR in the panel settings will avoid frustrations with the panel covering window title bars.
 .TP
 Win\-KeX Enhanced Session Mode
-Start: run \fBkex --esm\fR to start KeX in enhanced session mode. When prompted for the ESM password, enter the kali password for the current user. The username and password will be saved in the Windows credential store. Click through the RDC connection warnings to start the client (Tip: tick the "Don't ask me again" checkbox). ESM mode is the only mode supported on Arm. WoA has a bug at the time of writing, causing a high level of packet loss when using "localhost"; use the \fB-i\fR or \fB--ip\fR argument to use the ip address instead. 
+Start: run \fBkex --esm\fR to start KeX in enhanced session mode. When prompted for the ESM password, enter the password for the current user. The username and password will be saved in the Windows credential store. Click through the RDC connection warnings to start the client (Tip: tick the "Don't ask me again" checkbox). ESM mode is the only mode supported on Arm. WoA has a bug at the time of writing, causing a high level of packet loss when using "localhost"; use the \fB-i\fR or \fB--ip\fR argument to use the ip address instead. 
 .br
 Stop: Use the standard \fBlogout\fR workflow to exit the Win\-KeX session. To kill the xrdp server, type \fBkex --esm --stop\fR.
 .TP
