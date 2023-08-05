@@ -1,0 +1,1035 @@
+#!/usr/bin/env bash
+
+VERSION=3.1.1
+red='\033[1;31m'
+green='\033[1;32m'
+yellow='\033[1;33m'
+blue='\033[1;34m'
+light_cyan='\033[1;96m'
+reset='\033[0m'
+
+WINKEXDIR="/usr/lib/win-kex"
+XSTARTUP="${WINKEXDIR}/xstartup"
+XRDPINI="/etc/xrdp/xrdp.ini"
+XRDPSERVICE="${WINKEXDIR}/xrdp/xrdpservice"
+XSERV="${WINKEXDIR}/VcXsrv/vcxsrv.exe"
+XSERVSESSION=3
+#VNCSRV=$(which tigervncserver)
+VNCCLIENT="${WINKEXDIR}/TigerVNC/win-kex-win-x64"
+SESSION_CACHE="${HOME}/.cache/sessions/xfce4-session-"
+WSLGSOCK="${WINKEXDIR}/wslg-sock/wslg-sock"
+HOST="localhost"
+## Alt:  awk '/nameserver/ {print $2; exit}' /etc/resolv.conf
+##       /sbin/ip route | awk '/default/ {print $3}'
+HOSTIP=$(grep -m 1 nameserver /etc/resolv.conf | awk '{print $2}')
+RECONN_ON_ERR=1
+VERBOSE=
+NOWGL=
+ARCH=$(uname -m)
+SLTIMEOUT=100
+unset IP USR SOUND MULTISCREEN
+
+function print-help() {
+    printf "\n\tWin-KeX provides a GUI desktop experience for Athena OS in Windows Subsystem for Linux (WSL 2)"
+    printf "\n"
+    printf "\n\tUsage:"
+    printf "\n\t\tkex <mode> <command> <parameters>"
+    printf "\n"
+    printf "\n\t\t${blue}Mode:${reset}"
+    printf "\n\t\t[none]\t\t : Window Mode (default)"
+    printf "\n\t\t--esm\t\t : Enhanced Session Mode - Launch Win-KeX desktop in a dedicated window using Windows native RDP"
+    printf "\n\t\t--sl\t\t : SeamLess mode - Seamlessly integrate Win-KeX into the Windows desktop"
+    printf "\n\t\t--win\t\t : WINdow mode - Launch Win-KeX desktop in a dedicated window"
+    printf "\n"
+    printf "\n\t\t${blue}Command:${reset}"
+    printf "\n\t\t[none]\t\t : Start Win-KeX server and launch Win-KeX client"
+    printf "\n\t\t--start\t\t : Start Win-KeX server"
+    printf "\n\t\t--start-client\t : Start Win-KeX client"
+    printf "\n\t\t--wtstart\t : Start Win-KeX server and launch Win-KeX client in Windows Terminal session"
+    printf "\n\t\t--stop\t\t : Stop Win-KeX server"
+    printf "\n\t\t--status\t : Show Win-KeX server status"
+    printf "\n\t\t--kill\t\t : Stop Win-KeX server and kill all related processes"
+    printf "\n\t\t--passwd\t : Set Win-KeX server password"
+    printf "\n\t\t--start-sound\t : Start Windows sound server"
+    printf "\n\t\t--stop-sound\t : Stop Windows sound server"
+    printf "\n\t\t--wslg-restore\t : Restore WSLg unix socket"
+    printf "\n\t\t--wslg-remove\t : Remove WSLg unix socket"
+    printf "\n\t\t--wslg-status\t : Display status of WSLg unix socket"
+    printf "\n\t\t--version\t : Display Win-KeX version"
+    printf "\n\t\t--help\t\t : Display this help"
+    printf "\n"
+    printf "\n\t\t${blue}(Optional) Parameters:${reset}"
+    printf "\n\t\t--ip \t\t-i : Use container IP address instead of \"localhost\""
+    printf "\n\t\t--multiscreen \t-m : Optimized for multiscreen"
+    printf "\n\t\t--sound \t-s : Sound support"
+    printf "\n\t\t--nowgl \t-n : Disable Windows OpenGL"
+    printf "\n\t\t--norc \t\t-r : Disable Win-KeX client reconnecting - once is enough!"
+    printf "\n\t\t--wait \t\t-w : Wait longer for desktop to start when in SL mode"
+    printf "\n\t\t--verbose\t   : Verbose output"
+    printf "\n"
+    printf "\n\tExamples:"
+    printf "\n\t\tkex -s\t\t : Start Win-KeX server in window mode and launch Win-KeX client with sound support"
+    printf "\n\t\tkex --sl -s\t : Start Win-KeX in seamless mode and launch Win-KeX client with sound support"
+    printf "\n\t\tkex --esm -i -s\t : Start Win-KeX in Enhanced Session Mode with ARM workaround and launch Win-KeX client with sound support"
+    printf "\n\t\tsudo kex\t : Start Win-KeX server as root in window mode and launch Win-KeX client"
+    printf "\n"
+}
+
+function print-verbose() {
+    if [ -n "${VERBOSE}" ]; then
+        printf "> $@\n"
+    fi
+}
+
+function print-version() {
+    printf "$0: ${VERSION}\n"
+}
+
+function print-wrong-arch() {
+    printf "\n\t${light_cyan}The function is not supported on this architecture${SESSION_FILE}${reset}\n"
+}
+
+function ask() {
+    # http://djm.me/ask
+    while true; do
+        if [ "${2:-}" = "Y" ]; then
+            prompt="Y/n"
+            default=Y
+        elif [ "${2:-}" = "N" ]; then
+            prompt="y/N"
+            default=N
+        else
+            prompt="y/n"
+            default=
+        fi
+
+        # Ask the question
+        printf "${light_cyan}$1"
+        read -p " [${prompt}] " REPLY
+
+        # Default?
+        if [ -z "${REPLY}" ]; then
+            REPLY=${default}
+        fi
+
+        printf "${reset}"
+
+        # Check if the reply is valid
+        case "${REPLY}" in
+            Y*|y*) return 0 ;;
+            *)     return 1 ;;
+        esac
+    done
+}
+
+function is-root() {
+    print-verbose "Checking account type"
+    if [ -z ${USR} ]; then
+        USR=$(whoami)
+    fi
+
+    if [ "${USR}" == "root" ]; then
+        print-verbose "Root user"
+        # 0 = true
+        return 0
+    else
+        print-verbose "Non-root user"
+        # 1 = false
+        return 1
+    fi
+}
+
+function sudo-active() {
+    print-verbose "Checking sudo"
+    if sudo -nv 2>/dev/null; then
+        print-verbose "Found sudo"
+        # 0 = true
+        return 0
+    else
+        print-verbose "Without sudo"
+        # 1 = false
+        return 1
+    fi
+}
+
+function wslg-socket-check() {
+    print-verbose "Checking for WSLg socket"
+    if [ -L /tmp/.X11-unix ]; then
+        print-verbose "Found existing WSLg socket (Bad)"
+        # 0 = true
+        return 0
+    else
+        print-verbose "Missing socket (Good)"
+        # 1 = false
+        return 1
+    fi
+}
+
+function wslg-socket-remove(){
+    print-verbose "Converting WSLg socket to Win-KeX"
+    #printf "\n\t${red}A WSLg socket exists that prevent Win-KeX from starting${reset}"
+    #printf "\n\t${red}Removing the socket now. This will not adversely affect WSL or Win-KeX${reset}\n"
+    sudo ${WSLGSOCK} remove
+    return $?
+}
+
+function wslg-socket-restore(){
+    print-verbose "Restoring WSLg socket"
+    sudo ${WSLGSOCK} restore
+    return $?
+}
+
+function wslg-socket-status(){
+    status=$(${WSLGSOCK} status)
+    result=$?
+    if [ "${result}" != "0" ]; then
+        printf "\t${green}${status}${reset}\n"
+    else
+        printf "\t${red}${status}${reset}\n"
+    fi
+    return ${result}
+}
+
+function start-kex-win() {
+    printf 'Starting Win-KeX server (Win)\n'
+    if wslg-socket-check; then
+        wslg-socket-remove
+    fi
+
+    if [ ! -f ~/.vnc/passwd ]; then
+        passwd-set-win
+    fi
+
+    if is-root; then
+        SCREEN=":2"
+    else
+        SCREEN=":1"
+    fi
+
+    if [ -z ${SOUND} ]; then
+        print-verbose "Skipping sound support"
+        unset PULSE_SERVER
+    else
+        print-verbose "Sound support requested"
+        export PULSE_SERVER=tcp:${HOSTIP}
+    fi
+
+    ## REF: https://github.com/microsoft/WSL/issues/9303
+    if ! [ -w /tmp/.X11-unix ]; then
+        print-verbose "/tmp/.X11-unix is mounted as read-only - attempting to re-mount"
+
+        ## Clashes with wslg-socket-remove() / $ sudo ${WSLGSOCK} remove
+        #sudo umount /tmp/.X11-unix
+        #ln -sf /mnt/wslg/.X11-unix/X0 /tmp/.X11-unix/
+        sudo mount -o remount,rw /tmp/.X11-unix
+
+        if ! [ -w /tmp/.X11-unix ]; then
+            printf "\n\t${red}/tmp/.X11-unix is still read-only${reset}\n"
+            mount | grep /tmp/.X11-unix
+        else
+            print-verbose "Remount successful"
+        fi
+    fi
+
+    print-verbose "Running Win-KeX server (Win)"
+    #${VNCSRV} -useold -xstartup ${XSTARTUP} -SecurityTypes=VeNCrypt,TLSVnc ${SCREEN} >/dev/null 2>&1 </dev/null
+    sudo systemctl start vncserver@$SCREEN.service >/dev/null 2>&1 </dev/null
+    result=$?
+
+    if [ "${result}" != "0" ]; then
+        #print-verbose "${VNCSRV}: ${result}"
+        print-verbose "vncserver@$SCREEN.service: ${result}"
+        print-verbose "Possible Win-KeX server (Win) did not start up correctly. Check logs: ~/.vnc/$(hostname).${SCREEN}.log"
+    fi
+
+    print-verbose "Win-KeX server (Win) started"
+    starting_kex=1
+
+    status-kex-win
+    sessions-kex-win
+    return 0
+}
+
+function stop-kex-win() {
+    print-verbose "Stopping Win-KeX server (Win)"
+    #taskkill.exe /IM win-kex-win-x64 /T /F >/dev/null 2>&1
+    /init /mnt/c/Windows/system32/taskkill.exe taskkill.exe /IM win-kex-win-x64 /T /F >/dev/null 2>&1
+    #local output_1=$(${VNCSRV} -kill :1 2>&1)
+    #local output_2=$(${VNCSRV} -kill :2 2>&1)
+    sudo systemctl stop vncserver@:1.service 2>&1
+    sudo systemctl stop vncserver@:2.service 2>&1
+    local output_1=$(systemctl is-active vncserver@:1.service 2>&1)
+    local output_2=$(systemctl is-active vncserver@:2.service 2>&1)
+    if [[ "${output_1}" == *"inactive"* || "${output_2}" == *"inactive"* ]]; then
+        printf "\t${light_cyan}Win-KeX server (Win) stopped${reset}\n"
+        return 0
+    fi
+    return 1
+}
+
+function start-kex-esm() {
+    printf 'Starting Win-KeX server (ESM)\n'
+
+    export DESKTOP="XFCE"
+    sudo ${XRDPSERVICE} start
+    status=$?
+
+    print-verbose "Win-KeX server (ESM) started"
+    status-kex-esm
+    return ${status}
+}
+
+function stop-kex-esm() {
+    print-verbose "Stopping Win-KeX server (ESM)"
+    sudo ${XRDPSERVICE} stop
+    if [ "$?" == "0" ]; then
+        printf "\t${light_cyan}Win-KeX server (ESM) stopped${reset}\n"
+        return 0
+    fi
+    return 1
+}
+
+function status-kex-esm(){
+    ${XRDPSERVICE} status
+    result=$?
+    if [ "${result}" != "0" ]; then
+        printf "\t${green}Win-KeX server (ESM) is running${reset}\n"
+    else
+        printf "\tWin-KeX server (ESM) is stopped\n"
+    fi
+    return ${result}
+}
+
+function sessions-kex-sl() {
+    ## Workaround, as something has changed (WSL app? Linux packages?)
+    ## This check if vcxsrv is pre-installed, and running on host (requires manual setup)
+    ## - https://sourceforge.net/p/vcxsrv/wiki/VcXsrv%20%26%20Win10/
+    ## - https://gist.github.com/alextsil/f8d861b8a2fc766c06aefc0c35c083ee
+    vcxsrvhost=0
+    #timeout 3 bash -c "(echo > /dev/tcp/${HOSTIP}/6000)" >/dev/null 2>&1 && vcxsrvhost=1
+    sleep 5 # Needed for cases where vcxsrv.exe is not running on the host, otherwise it runs and then crashes
+    timeout 3 bash -c "(echo > /dev/tcp/${HOSTIP}/6003)" >/dev/null 2>&1 \
+        && vcxsrvhost=1
+    if [ "${vcxsrvhost}" == "1" ]; then
+        print-verbose "Found possible Win-KeX server (SL) running on host: ${HOSTIP}"
+        XSERVSESSION=0
+        return 0
+    else
+        printf "\tUnable to find Win-KeX server (SL) running on host: ${HOSTIP}"
+        print-verbose "Will try to use Win-KeX server (SL) inside of WSL"
+        XSERVSESSION=3
+        return 1
+    fi
+}
+
+function start-kex-sl() {
+    printf 'Starting Win-KeX server (SL)\n'
+    if wslg-socket-check; then
+        wslg-socket-remove
+    fi
+
+    if [ "${NOWGL}" == "1" ]; then
+        print-verbose "Skipping Windows OpenGL support"
+        wgl=""
+    else
+        print-verbose "Windows OpenGL support requested"
+        wgl="-wgl"
+    fi
+
+    log="/tmp/win-kex-sl_$(whoami).log"
+    print-verbose "Log file: ${log}"
+
+    if ! sessions-kex-sl; then
+        stop-kex-sl
+        #${XSERV} :${XSERVSESSION} -ac -terminate ${XMULTIMONITORS} -logfile ${log} -logverbose 10 -multiwindow -lesspointer -clipboard ${wgl} >/dev/null 2>&1 &
+        /init ${XSERV} ${XSERV} :${XSERVSESSION} -ac -terminate ${XMULTIMONITORS} -logfile ${log} -logverbose 10 -multiwindow -lesspointer -clipboard ${wgl} >/dev/null 2>&1 &
+        result=$?
+        if [ "${result}" != "0" ]; then
+            print-verbose "${XSERV}: ${result}"
+            print-verbose "Possible Win-KeX server (SL) may not have been successful"
+        fi
+        status-kex-sl
+    fi
+    return 0
+}
+
+function stop-kex-sl() {
+    print-verbose "Stopping Win-KeX server (SL)"
+    #taskkill.exe /IM vcxsrv.exe /T /F >/dev/null 2>&1
+    /init /mnt/c/Windows/system32/taskkill.exe taskkill.exe /IM vcxsrv.exe /T /F >/dev/null 2>&1
+    if [ "$?" == "0" ]; then
+        printf "\t${light_cyan}Win-KeX server (SL) stopped${reset}\n"
+        return 0
+    fi
+    return 1
+}
+
+function status-kex-sl(){
+    ##status=$(powershell.exe get-process vcxsrv 2>&1)
+    #status=$(tasklist.exe | grep vcxsrv)
+    status=$(/init /mnt/c/Windows/system32/tasklist.exe tasklist.exe | grep vcxsrv)
+    if [ $? == "0" ]; then
+        printf "\t${green}Win-KeX server (SL) is running${reset}\n"
+        # 0 = true
+        return 0
+    else
+        printf "\tWin-KeX server (SL) is stopped\n"
+        # 1 = false
+        return 1
+    fi
+}
+
+function passwd-set-win() {
+    print-verbose "Setting Win-KeX server (Win) password"
+    print-verbose "*Do not need to set a read-only password*"
+    vncpasswd
+    return $?
+}
+
+function passwd-read-esm() {
+    print-verbose "Getting password"
+    local passwd
+    stty_orig=$(stty -g) # save original terminal setting
+    stty -echo           # turn-off echoing
+    IFS= read -r passwd  # read the password
+    stty "${stty_orig}"  # restore terminal setting
+    echo "${passwd}"
+}
+
+function passwd-exist-esm() {
+    print-verbose "Checking if password set for Win-KeX server (ESM)"
+    USR=$(whoami)
+    #cmdkey.exe /list:LegacyGeneric:target=TERMSRV/${HOST} | grep -q ${USR}
+    /init /mnt/c/Windows/system32/cmdkey.exe cmdkey.exe /list:LegacyGeneric:target=TERMSRV/${HOST} | grep -q ${USR}
+    return $?
+}
+
+function passwd-set-esm() {
+    USR=$(whoami)
+    printf "Please enter Win-KeX server (ESM) password for user ${USR}:"
+    passwd=$(passwd-read-esm)
+    printf "\n"
+    #cmdkey.exe /generic:TERMSRV/${HOST} /user:${USR} /pass:${passwd} >/dev/null 2>&1 &
+    /init /mnt/c/Windows/system32/cmdkey.exe cmdkey.exe /generic:TERMSRV/${HOST} /user:${USR} /pass:${passwd} >/dev/null 2>&1 &
+}
+
+function status-all() {
+    status-kex-win
+    status-kex-sl
+    status-kex-esm
+    wslg-socket-status
+}
+
+function status-kex-win() {
+    if sessions-kex-win >/dev/null 2>&1; then
+        printf "\t${green}Win-KeX server (Win) is running${reset}\n"
+    else
+        printf "\tWin-KeX server (Win) is stopped\n"
+    fi
+}
+
+function sessions-kex-win() {
+    local result
+    #sessions=$(vncserver -list | sed s/"TigerVNC"/"Win-KeX"/)
+    sessions=$(systemctl is-active vncserver@$SCREEN.service 2>&1)
+    #if [[ ${sessions} == *"590"* ]]; then
+    if [[ $sessions == "active" ]]; then
+        #printf "\n${sessions}\n"
+        printf "\n$(echo "Port 590$SCREEN" | sed 's/://')\n"
+        printf "\nYou can use the Win-KeX client (Win) to connect to any of these displays\n"
+        result=0
+    else
+        if [ -n ${starting_kex} ]; then
+            printf '\nError connecting to the Win-KeX server (Win)\n'
+            printf 'Please try "'$0' start" to start the service\n'
+            printf 'If the server fails to start, please try "'$0' kill" or restart your WSL 2 session and try again\n'
+            result=1
+        fi
+    fi
+    printf '\n\n'
+    return ${result}
+}
+
+function start-client-win() {
+    printf 'Starting Win-KeX client (Win)\n'
+    if is-root; then
+        SCREEN=":2"
+        unset PASSWD
+    else
+        SCREEN=":1"
+        local PASSWD="-passwd ${HOME}/.vnc/passwd"
+    fi
+    
+    if [ -z ${MULTISCREEN} ]; then
+        print-verbose "Skipping Multiscreen support"
+        local FULLSCREEN="FullScreen=1"
+    else
+        print-verbose "Multiscreen support requested"
+        local FULLSCREEN="FullScreen=0 FullScreenAllMonitors=0"
+    fi
+
+    # If Win-KeX is started from the Windows home directory, it fails to open the passwd file
+    # Let's work around it by starting Win-KeX from the rootfs
+    cd ~
+    print-verbose "Running Win-KeX client (Win)"
+    #${VNCCLIENT} -SecurityTypes VeNCrypt,TLSVnc -ReconnectOnError ${RECONN_ON_ERR} ${PASSWD} ${FULLSCREEN} 127.0.0.1${SCREEN} >/dev/null 2>&1 &
+    /init ${VNCCLIENT} ${VNCCLIENT} -SecurityTypes VeNCrypt,TLSVnc -ReconnectOnError ${RECONN_ON_ERR} ${PASSWD} ${FULLSCREEN} 127.0.0.1${SCREEN} >/dev/null 2>&1 &
+    result=$?
+    if [ "${result}" != "0" ]; then
+        print-verbose "${VNCCLIENT}: ${result}"
+        print-verbose "Possible Win-KeX client (Win) may not have been successful"
+    fi
+    cd - >/dev/null 2>&1
+}
+
+function start-client-esm() {
+    printf 'Starting Win-KeX client (ESM)\n'
+    if [ ! -f ~/.win-kex.rdp ]; then
+        cp ${VERBOSE} ${WINKEXDIR}/xrdp/win-kex.rdp ~/.win-kex.rdp
+    fi
+
+    if ! passwd-exist-esm; then
+        passwd-set-esm
+    fi
+
+    if [ -z ${SOUND} ]; then
+        print-verbose "Skipping sound support"
+        if [ -f ~/.config/autostart/pulseaudio.desktop ]; then
+            rm -f ${VERBOSE} ~/.config/autostart/pulseaudio.desktop
+        fi
+    else
+        print-verbose "Sound support requested"
+        if [ ! -d ~/.config/autostart ]; then
+            mkdir -p ${VERBOSE} ~/.config/autostart
+        fi
+        cp ${VERBOSE} ${WINKEXDIR}/xrdp/pulseaudio.desktop ~/.config/autostart/
+    fi
+
+    cd ~
+    #mstsc.exe .win-kex.rdp /v:${HOST}:3390 &
+    /init /mnt/c/WINDOWS/system32/mstsc.exe mstsc.exe .win-kex.rdp /v:${HOST}:3390 &
+    result=$?
+    if [ "${result}" != "0" ]; then
+        print-verbose "mstsc.exe: ${result}"
+        print-verbose "Possible Win-KeX client (ESM) may not have been successful"
+    fi
+    cd - >/dev/null 2>&1
+    return $?
+}
+
+function start-client-wt() {
+    printf 'Starting Win-KeX client (Windows Terminal)\n'
+    while true; do
+        clear
+        printf "\n\t${blue}Win-KeX session is active\n\tClose this window to terminate Win-KeX${reset}\n"
+        # If Win-KeX is started from the Windows home directory, it fails to open the passwd file
+        # Let's work around it by starting Win-KeX from the rootfs
+        cd ~
+        if [ "${mode}" == "sl" ]; then
+            start-client-sl
+            while true; do
+                read -n 1
+            done
+        elif [ "${mode}" == "esm" ]; then
+            start-client-esm
+            local pid=$!
+            while kill -0 ${pid} 2>/dev/null; do
+                sleep 1
+            done
+        else
+            if [ -z ${MULTISCREEN} ]; then
+                print-verbose "Skipping Multiscreen support"
+                local FULLSCREEN="FullScreen=1"
+            else
+                print-verbose "Multiscreen support requested"
+                local FULLSCREEN="FullScreen=0 FullScreenAllMonitors=0"
+            fi
+            ${VNCCLIENT} -SecurityTypes VeNCrypt,TLSVnc -passwd ${HOME}/.vnc/passwd ${FULLSCREEN} 127.0.0.1:1
+        fi
+        cd - >/dev/null 2>&1
+        if ask "\n\tWin-KeX session disconnected\n\tWould you like to reconnect?" "Y"; then
+            printf "\n\tReconnecting Win-KeX session\n"
+        else
+            stop-kex-win
+            exit 0
+        fi
+    done
+}
+
+function run-xfdesktop() {
+    print-verbose "Looking for: xfdesktop -Q"
+    print-verbose "Waiting ${SLTIMEOUT} seconds"
+    i=1
+    nopid=0
+    until pids=$(pidof xfdesktop); do
+        xfdesktop -Q >/dev/null 2>&1
+        i=$((i + 1))
+        sleep 1
+        if [ ${i} -ge ${SLTIMEOUT} ]; then
+            nopid=1
+            break
+        fi
+        if [ -n "${VERBOSE}" ]; then
+            printf '.'
+        fi
+    done
+    printf '\n'
+
+    if [ ${nopid} == "1" ]; then
+        printf "\t${light_cyan}Waited ${i} seconds for xfdesktop -Q (gave up)${reset}\n"
+    fi
+
+    return ${nopid}
+}
+
+function start-client-sl() {
+    printf 'Starting Win-KeX client (SL)\n'
+    sessions-kex-sl
+    XFCE_DESKTOP_DISABLED="0"
+    SESSION=${HOSTIP}:${XSERVSESSION}
+    #export DISPLAY=${SESSION}.0
+    export DISPLAY=":0.0"
+    export GDK_BACKEND=x11
+    
+    if [ "${NOWGL}" == "1" ]; then
+        print-verbose "Skipping Windows OpenGL support"
+    else
+        print-verbose "Windows OpenGL support requested"
+        export LIBGL_ALWAYS_INDIRECT=1
+    fi
+
+    if [ -z ${SOUND} ]; then
+        print-verbose "Skipping sound support"
+        unset PULSE_SERVER
+    else
+        print-verbose "Sound support requested"
+        export PULSE_SERVER=tcp:${HOSTIP}
+    fi
+
+    ## Clean up stale sessions first
+    print-verbose "Killing session"
+    pkill -ef "dbus-launch --exit-with-session xfce4-session" >/dev/null 2>&1
+
+    ## Launch new Xfce session
+    print-verbose "Starting session"
+    dbus-launch --exit-with-session xfce4-session >/dev/null 2>&1 &
+
+    SESSION_CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/sessions/xfce4-session-"
+    SESSION_FILE="${SESSION_CACHE}${SESSION}"
+    print-verbose "Checking session: ${SESSION_FILE}"
+
+    if [ -f ${SESSION_FILE} ]; then
+        print-verbose "Found session file"
+        if ! grep -q "xfdesktop" ${SESSION_FILE} >/dev/null 2>&1; then
+            XFCE_DESKTOP_DISABLED="1"
+            printf "\t${light_cyan}Win-KeX client (SL) is already enabled${reset}\n"
+        fi
+    fi
+
+    if [ ! ${XFCE_DESKTOP_DISABLED} == "1" ]; then
+        printf "\t${light_cyan}Enabling Win-KeX client (SL)${reset}\n"
+        print-verbose "Waiting ${SLTIMEOUT} seconds for Win-KeX server (SL)"
+        i=1
+        nopid=0
+        until pids=$(pidof xfdesktop); do
+            i=$((i + 1))
+            sleep 1
+            if [ ${i} -ge ${SLTIMEOUT} ]; then
+                nopid=1
+                break
+            fi
+            if [ -n "${VERBOSE}" ]; then
+                printf '.'
+            fi
+        done
+        printf '\n'
+        if [ ${nopid} == "0" ]; then
+            printf "\t${light_cyan}xfDesktop started after ${i} seconds${reset}\n"
+            printf "\t${light_cyan}Enabling transparency now${reset}\n"
+            sleep 2
+            run-xfdesktop
+        else
+            printf "\t${light_cyan}Waited ${i} seconds for xfDesktop (gave up)${reset}\n"
+            printf "\tTry either:\n $0 --sl --wait [...]\n"
+            printf "\t\t$0 --sl --wait [...]\n"
+            printf "\t\tInstall vcxsrv on the host outside of WSL: https://www.athenaos.org/en/wsl/wsl/\n"
+            if [ -n "${VERBOSE}" ]; then
+                printf '\n'
+                cat "${log}"
+            fi
+            return 1
+        fi
+        ## Repeat, just in case
+        if [ ${nopid} == "0" ]; then
+            run-xfdesktop
+        fi
+
+        ## Save the session
+        printf "\t${light_cyan}Saving Win-KeX server (SL) session${reset}\n"
+        dbus-send --session --dest=org.xfce.SessionManager --print-reply /org/xfce/SessionManager org.xfce.Session.Manager.Checkpoint string:"" >/dev/null 2>&1
+    fi
+
+    printf "\t${light_cyan}Started Win-KeX server (SL)${reset}\n"
+    return 0
+}
+
+function kill-kex() {
+    print-verbose "Killing Win-KeX"
+    stop-kex-win
+    stop-kex-sl
+    stop-kex-esm
+    stop-sound
+    wslg-socket-restore
+    pkill ssh-agent
+    pkill Xtigervnc
+    pkill xiccd
+    pkill pulseaudio
+    pkill -9 -f pulseaudio.exe
+    pkill xcape
+    pkill Xorg
+    pkill xrdp-chansrv
+    return $?
+}
+
+function start-sound() {
+    print-verbose "Starting sound"
+    cd /usr/lib/win-kex/pulse
+    #./pulseaudio.exe -F config.pa >/dev/null 2>&1 &
+    /init ./pulseaudio.exe pulseaudio.exe -F config.pa >/dev/null 2>&1 &
+    cd - >/dev/null 2>&1 &
+}
+
+function stop-sound() {
+    print-verbose "Stopping sound"
+    pkill -9 -f pulseaudio.exe
+}
+
+unset mode
+unset cmd
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        # PARAMETERS:
+        -i|--ip)
+            # Use IP address instead of localhost
+            # Fixes latency issues on ARM (as with version 19041.423)
+            IP=1
+            shift
+            ;;
+        -s|--sound)
+            SOUND=1
+            shift
+            ;;
+        -m|--multiscreen)
+            MULTISCREEN=1
+            XMULTIMONITORS="-nomultimonitors"
+            shift
+            ;;
+        -n|--nowgl)
+            NOWGL=1
+            shift
+            ;;
+        -r|--norc)
+            RECONN_ON_ERR=0
+            shift
+            ;;
+        -w|--wait)
+            # Wait longer for desktop to start in SL mode when launched for first time
+            # Can be used on slower machines where the desktop takes longer than
+            # 100 seconds to start. Only required on first start to enable transparency
+            SLTIMEOUT=300
+            shift
+            ;;
+        # MODES:
+        esm|--esm)
+            mode=esm
+            shift
+            ;;
+        sl|--sl)
+            mode=sl
+            shift
+            ;;
+        win|--win)
+            mode=win
+            shift
+            ;;
+        # COMMANDS:
+        wslg-remove|--wslg-remove)
+            cmd=remove_wslg
+            shift
+            ;;
+        wslg-restore|--wslg-restore)
+            cmd=restore_wslg
+            shift
+            ;;
+        wslg-status|--wslg-status)
+            cmd=status_wslg
+            shift
+            ;;
+        kill|--kill)
+            cmd=kill
+            shift
+            ;;
+        passwd|--passwd)
+            cmd=passwd
+            shift
+            ;;
+        start|--start)
+            cmd=start
+            shift
+            ;;
+        start-client|start-c|--start-client|--start-c)
+            cmd=start-client
+            shift
+            ;;
+        start-sound|--start-sound)
+            cmd=start-sound
+            shift
+            ;;
+        status|--status)
+            cmd=status
+            shift
+            ;;
+        stop|--stop)
+            cmd=stop
+            shift
+            ;;
+        stop-sound|--stop-sound)
+            cmd=stop-sound
+            shift
+            ;;
+        wtstart|--wtstart)
+            cmd=wtstart
+            shift
+            ;;
+        help|-h|--help)
+            cmd=help
+            shift
+            ;;
+        --version)
+            cmd=version
+            shift
+            ;;
+        --verbose)
+            VERBOSE=-v
+            shift
+            ;;
+        *)
+            printf "Unknown option: $1\n"
+            if [ -z ${cmd} ]; then
+                cmd=default
+            fi
+            shift
+            ;;
+    esac
+done
+
+if [ "${SOUND}" == "1" ] && [ ! "${mode}"  == "esm" ] && [ ! "${ARCH}" == "aarch64" ]; then
+    stop-sound
+    start-sound
+fi
+
+if [ "${IP}" == "1" ]; then
+    HOST=$(ip addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+    print-verbose "IP: ${HOST}"
+fi
+
+case ${cmd} in
+    remove_wslg)
+        if wslg-socket-check; then
+            wslg-socket-remove
+        fi
+        exit
+        ;;
+    restore_wslg)
+        if ! wslg-socket-check; then
+            wslg-socket-restore
+        fi
+        exit
+        ;;
+    status_wslg)
+        wslg-socket-status
+        exit
+        ;;
+esac
+
+if [ "${ARCH}" == "aarch64" ]; then
+    case ${cmd} in
+        start)
+            if [ "${mode}"  == "sl" ]; then
+                print-wrong-arch
+            elif [ "${mode}"  == "esm" ]; then
+                start-kex-esm
+            else
+                start-kex-esm
+            fi
+            ;;
+        stop)
+            if [ "${mode}"  == "sl" ]; then
+                print-wrong-arch
+            elif [ "${mode}"  == "esm" ]; then
+                stop-kex-esm
+            else
+                stop-kex-esm
+            fi
+            ;;
+        start-client)
+            if [ "${mode}"  == "sl" ]; then
+                print-wrong-arch
+            elif [ "${mode}"  == "esm" ]; then
+                start-client-esm
+            else
+                start-client-esm
+            fi
+            ;;
+        status)
+            if [ "${mode}"  == "sl" ]; then
+                status-kex-sl
+            elif [ "${mode}"  == "esm" ]; then
+                status-kex-esm
+            elif [ "${mode}"  == "win" ]; then
+                status-kex-win
+            else
+                status-all
+            fi
+            ;;
+        passwd)
+            if [ "${mode}" == "esm" ]; then
+                passwd-set-esm
+            elif [ ! "${mode}"  == "sl" ]; then
+                passwd-set-esm
+            else
+                printf "\n\t${red}This command is not supported in \"${mode}\" mode${reset}\n"
+            fi
+            ;;
+        kill)
+            kill-kex
+            ;;
+        start-sound)
+            print-wrong-arch
+            ;;
+        stop-sound)
+            print-wrong-arch
+            ;;
+        wtstart)
+            if [ "${mode}"  == "sl" ]; then
+                print-wrong-arch
+            elif [ "${mode}"  == "esm" ]; then
+                stop-kex-esm
+                start-kex-esm
+                start-client-wt
+            else
+                mode=esm
+                stop-kex-esm
+                start-kex-esm
+                start-client-wt
+            fi
+            ;;
+        help)
+            print-help
+            ;;
+        version)
+            print-version
+            ;;
+        *)
+            if [ "${mode}"  == "sl" ]; then
+                print-wrong-arch
+            elif [ "${mode}"  == "win" ]; then
+                print-wrong-arch
+            else
+                start-kex-esm
+                start-client-esm
+            fi
+            ;;
+    esac
+else
+    case ${cmd} in
+        start)
+            if [ "${mode}"  == "sl" ]; then
+                start-kex-sl
+            elif [ "${mode}"  == "esm" ]; then
+                start-kex-esm
+            else
+                start-kex-win
+            fi
+            ;;
+        stop)
+            if [ "${mode}"  == "sl" ]; then
+                stop-kex-sl
+            elif [ "${mode}"  == "esm" ]; then
+                stop-kex-esm
+            else
+                stop-kex-win
+            fi
+            ;;
+        start-client)
+            if [ "${mode}"  == "sl" ]; then
+                start-client-sl
+            elif [ "${mode}"  == "esm" ]; then
+                start-client-esm
+            else
+                start-client-win
+            fi
+            ;;
+        status)
+            if [ "${mode}"  == "sl" ]; then
+                status-kex-sl
+            elif [ "${mode}"  == "esm" ]; then
+                status-kex-esm
+            elif [ "${mode}"  == "win" ]; then
+                status-kex-win
+            else
+                status-all
+            fi
+            ;;
+        passwd)
+            if [ "${mode}" == "esm" ]; then
+                passwd-set-esm
+            elif [ ! "${mode}"  == "sl" ]; then
+                passwd-set-win
+            else
+                printf "\n\t${red}This command is not supported in \"${mode}\" mode${reset}\n"
+            fi
+            ;;
+        kill)
+            kill-kex
+            ;;
+        start-sound)
+            stop-sound
+            start-sound
+            ;;
+        stop-sound)
+            stop-sound
+            ;;
+        wtstart)
+            if [ "${mode}"  == "sl" ]; then
+                start-kex-sl
+                start-client-wt
+            elif [ "${mode}"  == "esm" ]; then
+                stop-kex-esm
+                start-kex-esm
+                start-client-wt
+            else
+                start-kex-win
+                start-client-wt
+            fi
+            ;;
+        help)
+            print-help
+            ;;
+        version)
+            print-version
+            ;;
+        *)
+            if [ "${mode}"  == "sl" ]; then
+                start-kex-sl
+                start-client-sl
+            elif [ "${mode}"  == "esm" ]; then
+                start-kex-esm
+                start-client-esm
+            else
+                start-kex-win
+                start-client-win
+            fi
+            ;;
+    esac
+fi

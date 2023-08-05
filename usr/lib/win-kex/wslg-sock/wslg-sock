@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+
+function is_root() {
+    if [ -z $USR ]; then
+        USR=$(whoami)
+    fi
+    if [ "${USR}" == "root" ]; then
+        # 0 = true
+        return 0
+    else
+        # 1 = false
+        return 1
+    fi
+}
+
+function is_wslg_socket() {
+    if [ -L /tmp/.X11-unix ]; then
+        # 0 = true
+        return 0
+    else
+        # 1 = false
+        return 1
+    fi
+}
+
+function remove_wslg_socket(){
+    cd /tmp
+    mv /tmp/.X11-unix /tmp/.X11-unix.bak
+    mkdir /tmp/.X11-unix
+    chmod 1777 /tmp/.X11-unix
+    ln -s /mnt/wslg/.X11-unix/X0 /tmp/.X11-unix/X0
+    cd - &>/dev/null
+    return
+}
+
+function restore_wslg_socket(){
+    cd /tmp
+    rm -rf /tmp/.X11-unix
+    ln -s /mnt/wslg/.X11-unix /tmp/.X11-unix
+    cd - &>/dev/null
+    return
+}
+
+function check_root(){
+    if ! is_root; then
+      printf "\nThis option must be run as root. Try: sudo $0\n\n"
+      exit 1
+    fi
+}
+
+case "$1" in
+    remove)
+      check_root
+      remove_wslg_socket
+      if is_wslg_socket; then
+          exit 1
+      else
+          exit 0
+      fi
+      ;;
+
+    restore)
+      check_root
+      restore_wslg_socket
+      if is_wslg_socket; then
+          exit 0
+      else
+          exit 1
+      fi
+      ;;
+
+    status)
+      if is_wslg_socket; then
+          printf "'/tmp/.X11-unix' is a WSLg socket\n\n"
+          exit 0
+      else
+          printf "'/tmp/.X11-unix' is a Win-KeX socket\n\n"
+          exit 1
+      fi
+      ;;
+    *)
+      printf "Unknown option: $1\n"
+      exit 2
+esac
+exit

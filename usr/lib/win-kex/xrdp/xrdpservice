@@ -1,0 +1,41 @@
+#!/bin/bash
+
+function status(){
+    xrdp_stat=$(systemctl is-active xrdp)
+    dbus_stat=$(systemctl is-active dbus)
+
+    if [[ "${xrdp_stat}" != *"active"* ]] && [[ "${dbus_stat}" != *"active"* ]]; then
+        echo "1"
+    else
+        echo "0"
+    fi
+    return
+}
+
+case "$1" in
+    start)
+      if grep -q "port=3389" "/etc/xrdp/xrdp.ini"; then
+          sed -i 's/port=3389/port=3390/g' /etc/xrdp/xrdp.ini
+      fi
+      systemctl start dbus >/dev/null 2>&1
+      systemctl start xrdp >/dev/null 2>&1
+      sleep 1
+      status=$(status)
+      exit $status
+      ;;
+
+    stop)
+      status=$(status)
+      systemctl stop xrdp >/dev/null 2>&1
+      systemctl stop dbus >/dev/null 2>&1
+      exit $status
+      ;;
+
+    status)
+      status=$(status)
+      exit $status
+      ;;
+    *)
+      exit 1
+esac
+exit $?

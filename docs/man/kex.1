@@ -1,0 +1,179 @@
+.TH KEX "1" "May 2022" "Win-KeX 3.1" "User Commands"
+.SH NAME
+kex \- manual page for Win-KeX (Kali Desktop Experience for Windows)
+.SH SYNOPSYS
+kex [mode] [command] [parameters]
+.SH DESCRIPTION
+.SS
+Overview:
+Win\-KeX provides a GUI desktop environment for Kali Linux in Windows Subsystem for Linux 2 (WSL 2).
+.br 
+Win\-KeX supports three modes:
+.TP
+\fBWindow Mode  (kex)\fR
+Kali desktop in a dedicated window using VNC technologies.
+.TP
+\fBEnhanced Session Mode (kex --esm)\fR
+Kali desktop in a dedicated window using RDP protocol.
+.TP
+\fBSeemless mode (kex --sl)\fR
+Windows desktop is seemlessly shared between Kali and Windows applications via a Windows X Server.
+.br
+.P
+All modes support sound when launched with the
+.B -s
+command line parameter.
+.br
+.SS
+Usage:
+.TP
+Win\-KeX Window Mode
+Start: run \fBkex --win\fR to start the KeX server and launch the Win-KeX client. Use the \fB-s\fR parameter to enable sound support.
+.br
+Use: Press \fBF8\fR to open the vnc viewer's context menu, which allows one to manage the client session.
+.br
+Disconnect: Press \fBF8\fR and choose \fBExit viewer\fR. The server session remains active and you can reconnect to it by starting the Win-KeX client via \fBkex --start-client\fR.
+.br
+Stop: To stop the Win-KeX session, run \fBkex --stop\fR.
+.TP
+Win\-KeX Seemless Mode
+Start: run \fBkex --sl\fR to start KeX in seemless mode. The Kali Linux panel will pop up on top of the screen. Use the \fB-s\fR parameter to enable sound support. During the first launch, Win-KeX waits for the xfce desktop to start before it can enable the seemless mode, which usually takes less than 20 seconds. In the unlikely event that the startup exceeds 100 seconds on very slow machines, Win-KeX will time out and the Kali desktop might appear. If that ever happens, just use the \fB-w\fR or \fB--wait\fR argument to increase the timeout.
+.br
+Stop: Use the standard \fBlogout\fR workflow to exit the Win\-KeX session. To kill the Windows X Server, type \fBkex --sl --stop\fR.
+.IP
+\fBTip:\fR Enabling \fBAutohide\fR in the panel settings will avoid frustrations with the panel covering window title bars.
+.TP
+Win\-KeX Enhanced Session Mode
+Start: run \fBkex --esm\fR to start KeX in enhanced session mode. When prompted for the ESM password, enter the kali password for the current user. The username and password will be saved in the Windows credential store. Click through the RDC connection warnings to start the client (Tip: tick the "Don't ask me again" checkbox). ESM mode is the only mode supported on Arm. WoA has a bug at the time of writing, causing a high level of packet loss when using "localhost"; use the \fB-i\fR or \fB--ip\fR argument to use the ip address instead. 
+.br
+Stop: Use the standard \fBlogout\fR workflow to exit the Win\-KeX session. To kill the xrdp server, type \fBkex --esm --stop\fR.
+.TP
+Win\-KeX as root
+To start Win\-KeX as root, type \fBsudo kex\fR or \fBsudo kex \-\-sl\fR.
+Note: Starting a Win\-KeX Window session as root requires explicit authentication of the Win\-KeX client. When prompeted for a password, enter the vnc password for the root session.
+.TP
+Multiple Win\-KeX sessions
+You can comfortably run the following sessions in parallel:
+.IP
+\fBWin\-KeX Win session as unprivileged user\fR
+.br
+\fBWin\-KeX Win session as root user\fR
+.br
+\fBWin\-KeX SL session as unprivileged or as root user\fR
+.TP
+Windows firewall
+Win-KeX SL and sound support run server components in the Windows context, which require access through the Windows Defender Firewall. When prompted to allow traffic through the firewall, tick \fBPublic networks\fR. You can later go into the \fBInbound Rules\fR section of the Windows Defender Firewall Settings and restrict access for \fBpulseaudio.exe\fR and \fBvcxsrv.exe\fR to the WSL2 network (usually 172.3x.xxx.0/20). 
+.TP
+Windows Subsystem for Linux GUI compatibility
+Win-KeX is fully compatible with WSLg. To achieve that, Win-KeX automatically  moves away the incompatible socket directory created by Windows and re-creates it in a way that makes it compatible with both Win-KeX and WSLg. There are various command line options to manually configure the socket directory (i.e. \fBwslg-remove, wslg-restore, wslg-status\fR).
+.SH OPTIONS
+.TP
+none
+start kex server in window mode and launch win\-kex client
+.SS
+Mode:
+.TP
+\-\-esm
+Enhance Session Mode using the Windows RDP client. Best mode for Windows on Arm and HiDPI displays
+.TP
+\-\-sl
+Seemlessly integrate KeX into the Windows desktop
+.TP
+\-\-win
+Launch KeX desktop in a dedicated window
+.SS
+Command:
+.TP
+\-\-help
+display help
+.TP
+\-\-kill
+stop kex servers and kill all related processes
+.TP
+\-\-passwd
+set kex server password (Window mode only)
+.TP
+\-\-start
+start kex server
+.TP
+\-\-start\-client
+start kex client
+.TP
+\-\-start\-sound
+start Windows sound server
+.TP
+\-\-status
+show kex server status (either for given mode or for all modes in no mode
+.TP
+\-\-stop
+stop kex server
+.TP
+\-\-stop\-sound
+stop Windows sound server
+.TP
+\-\-version
+display version
+.TP
+\-\-wslg-remove
+Replace Windows propriatary X11 Unix socket directory with standard socket directory and relink X0 to WSLg to provide compatibility with both Win-KeX and WSLg. This is usually done automatically on startup and does not need to be run explicitly. 
+.TP
+\-\-wslg-restore
+Remove X11 Unix socket directory created with "\-\-wslg-remove and re-create Windows propriatary X11 Unix socket directory. This will break compatibility with Win-KeX and will be removed the next time Win-KeX starts.
+.TP
+\-\-wslg-status
+Display status of X11 Unix socket directory, either "WSLg" or "Win-KeX". "WSLg" is the default Windows configuration and not compatible with Win-KeX. "Win-KeX" is compatible with both Win-KeX and WSLg.
+.TP
+\-\-wtstart
+start kex server and launch win\-kex client in Windows Terminal session
+.SS
+Parameters:
+.TP
+\-s, --sound
+start Windows sound server and launch KeX with sound support
+.SS
+Advanced Parameters:
+.TP
+\-i, \-\-ip
+Use the IP address for the client connection rather than "localhost". Windows on Arm has a bug that causes a high rate of packet loss when using "localhost". The downside is, that the IP address changes after each reboot and with it the esm connection name requiring to enter the esm password again after each reboot. 
+.TP
+\-m, \-\-multiscreen
+start SL mode on  the primary screen only or Win mode in a window on the main screen for better multiscreen support. Just move the window to the preferred screen, press \fBF8\fR and select \fBFull screen\fR 
+.TP
+\-n, \-\-nowgl
+start SL mode without using the Windows native OpenGL library
+.TP
+\-w, \-\-wait
+Increase timeout in SL mode when waiting for desktop before enabling transparency. Might be required on slower machines. 
+.SH
+SEE ALSO
+.B Win-KeX
+utilises functions and programs from the following 3rd party packages:
+.IP
+tigervncserver(1)
+.br
+tigervncviewer for Windows
+.br
+pulseaudio(1)
+.br
+pulseaudio for Windows
+.br
+VcXsrv Windows X Server
+.P
+For information about these componenets please refer to the relevant manpage or online documentation.
+.SH
+AUTHORS
+Kali Developers
+.br
+devel@kali.org
+.br
+  
+.br
+Win-KeX utilises the following software, written by amazing people:
+.br
+TigerVNC
+.br
+VcXsrv Windows X Server
+.SH
+REPORTING BUGS
+Kali Linux Bug Tracker: https://bugs.kali.org/
+
