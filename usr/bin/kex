@@ -206,6 +206,10 @@ function start-kex-win() {
         SCREEN=":1"
     fi
 
+    if ! grep -q "$SCREEN=$USER" "/etc/tigervnc/vncserver.users"; then
+        echo "$SCREEN=$USER" | sudo tee -a /etc/tigervnc/vncserver.users
+    fi
+
     if [ -z ${SOUND} ]; then
         print-verbose "Skipping sound support"
         unset PULSE_SERVER
