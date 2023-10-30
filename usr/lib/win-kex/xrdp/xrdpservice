@@ -18,7 +18,7 @@ case "$1" in
           sed -i 's/port=3389/port=3390/g' /etc/xrdp/xrdp.ini
       fi
       systemctl start dbus >/dev/null 2>&1
-      systemctl start xrdp >/dev/null 2>&1
+      systemctl restart xrdp >/dev/null 2>&1
       sleep 1
       status=$(status)
       exit $status
