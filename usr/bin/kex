@@ -310,14 +310,12 @@ function sessions-kex-sl() {
     ## - https://sourceforge.net/p/vcxsrv/wiki/VcXsrv%20%26%20Win10/
     ## - https://gist.github.com/alextsil/f8d861b8a2fc766c06aefc0c35c083ee
     vcxsrvhost=0
-    #timeout 3 bash -c "(echo > /dev/tcp/${HOSTIP}/6000)" >/dev/null 2>&1 && vcxsrvhost=1
     sleep 5 # Needed for cases where vcxsrv.exe is not running on the host, otherwise it runs and then crashes
-    timeout 3 bash -c "(echo > /dev/tcp/${HOSTIP}/6003)" >/dev/null 2>&1 \
+    timeout 3 bash -c "(echo > /dev/tcp/${HOSTIP}/6000)" >/dev/null 2>&1 \
         && vcxsrvhost=1
     if [ "${vcxsrvhost}" == "1" ]; then
         print-verbose "Found possible Win-KeX server (SL) running on host: ${HOSTIP}"
-        #XSERVSESSION=0 # Commented because noted that the host server is always on DISPLAY 3.0
-        XSERVSESSION=3
+        XSERVSESSION=0 # Port 6000 should mean server host display on :0.0
         return 0
     else
         printf "\tUnable to find Win-KeX server (SL) running on host: ${HOSTIP}"
