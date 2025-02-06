@@ -21,7 +21,8 @@ WSLGSOCK="${WINKEXDIR}/wslg-sock/wslg-sock"
 HOST="localhost"
 ## Alt:  awk '/nameserver/ {print $2; exit}' /etc/resolv.conf
 ##       /sbin/ip route | awk '/default/ {print $3}'
-HOSTIP=$(grep -m 1 nameserver /etc/resolv.conf | awk '{print $2}')
+#HOSTIP=$(grep -m 1 nameserver /etc/resolv.conf | awk '{print $2}')
+HOSTIP=$(/init /mnt/c/Windows/system32/route.exe route.exe print | grep 0.0.0.0 | head -1 | awk '{print $4}')
 RECONN_ON_ERR=1
 VERBOSE=
 NOWGL=
@@ -65,6 +66,7 @@ function print-help() {
     printf "\n\t\t--nowgl \t-n : Disable Windows OpenGL"
     printf "\n\t\t--norc \t\t-r : Disable Win-KeX client reconnecting - once is enough!"
     printf "\n\t\t--wait \t\t-w : Wait longer for desktop to start when in SL mode"
+    printf "\n\t\t--use-existing-gui-vars \t\t : Use existing DISPLAY and PULSE_SERVER variables, without changing. Useful if you have a custom setup outside of KeX or want to use WSLG."
     printf "\n\t\t--verbose\t   : Verbose output"
     printf "\n"
     printf "\n\tExamples:"
@@ -196,7 +198,7 @@ function start-kex-win() {
         wslg-socket-remove
     fi
 
-    if [ ! -f ~/.vnc/passwd ]; then
+    if [ ! -f ~/.config/tigervnc/passwd ]; then
         passwd-set-win
     fi
 
@@ -215,7 +217,9 @@ function start-kex-win() {
         unset PULSE_SERVER
     else
         print-verbose "Sound support requested"
-        export PULSE_SERVER=tcp:${HOSTIP}
+        if [ -z "$PULSE_SERVER" ] || [ "${USE_EXISTING_GUI_VARS}" != 1 ]; then
+            export PULSE_SERVER=tcp:${HOSTIP}
+        fi
     fi
 
     ## REF: https://github.com/microsoft/WSL/issues/9303
@@ -342,16 +346,17 @@ function start-kex-sl() {
     log="/tmp/win-kex-sl_$(whoami).log"
     print-verbose "Log file: ${log}"
 
-    if ! sessions-kex-sl; then
-        stop-kex-sl
-        #${XSERV} :${XSERVSESSION} -ac -terminate ${XMULTIMONITORS} -logfile ${log} -logverbose 10 -multiwindow -lesspointer -clipboard ${wgl} >/dev/null 2>&1 &
-        /init ${XSERV} ${XSERV} :${XSERVSESSION} -ac -terminate ${XMULTIMONITORS} -logfile ${log} -logverbose 10 -multiwindow -lesspointer -clipboard ${wgl} >/dev/null 2>&1 &
-        result=$?
-        if [ "${result}" != "0" ]; then
-            print-verbose "${XSERV}: ${result}"
-            print-verbose "Possible Win-KeX server (SL) may not have been successful"
+    if [ "${USE_EXISTING_GUI_VARS}" != 1 ]; then
+        if ! sessions-kex-sl; then
+            stop-kex-sl
+            ${XSERV} :${XSERVSESSION} -ac -terminate ${XMULTIMONITORS} -logfile ${log} -logverbose 10 -multiwindow -lesspointer -clipboard ${wgl} >/dev/null 2>&1 &
+            result=$?
+            if [ "${result}" != "0" ]; then
+                print-verbose "${XSERV}: ${result}"
+                print-verbose "Possible Win-KeX server (SL) may not have been successful"
+            fi
+            status-kex-sl
         fi
-        status-kex-sl
     fi
     return 0
 }
@@ -460,7 +465,7 @@ function start-client-win() {
         unset PASSWD
     else
         SCREEN=":1"
-        local PASSWD="-passwd ${HOME}/.vnc/passwd"
+        local PASSWD="-passwd ${HOME}/.config/tigervnc/passwd"
     fi
     
     if [ -z ${MULTISCREEN} ]; then
@@ -475,8 +480,8 @@ function start-client-win() {
     # Let's work around it by starting Win-KeX from the rootfs
     cd ~
     print-verbose "Running Win-KeX client (Win)"
-    #${VNCCLIENT} -SecurityTypes VeNCrypt,TLSVnc -ReconnectOnError ${RECONN_ON_ERR} ${PASSWD} ${FULLSCREEN} 127.0.0.1${SCREEN} >/dev/null 2>&1 &
-    /init ${VNCCLIENT} ${VNCCLIENT} -SecurityTypes VeNCrypt,TLSVnc -ReconnectOnError ${RECONN_ON_ERR} ${PASSWD} ${FULLSCREEN} 127.0.0.1${SCREEN} >/dev/null 2>&1 &
+    #${VNCCLIENT} -SecurityTypes VeNCrypt,TLSVnc -ReconnectOnError ${RECONN_ON_ERR} ${PASSWD} ${FULLSCREEN} ${HOST}${SCREEN} >/dev/null 2>&1 &
+    /init ${VNCCLIENT} ${VNCCLIENT} -SecurityTypes VeNCrypt,TLSVnc -ReconnectOnError ${RECONN_ON_ERR} ${PASSWD} ${FULLSCREEN} ${HOST}${SCREEN} >/dev/null 2>&1 &
     result=$?
     if [ "${result}" != "0" ]; then
         print-verbose "${VNCCLIENT}: ${result}"
@@ -547,7 +552,7 @@ function start-client-wt() {
                 print-verbose "Multiscreen support requested"
                 local FULLSCREEN="FullScreen=0 FullScreenAllMonitors=0"
             fi
-            ${VNCCLIENT} -SecurityTypes VeNCrypt,TLSVnc -passwd ${HOME}/.vnc/passwd ${FULLSCREEN} 127.0.0.1:1
+            ${VNCCLIENT} -SecurityTypes VeNCrypt,TLSVnc -passwd ${HOME}/.config/tigervnc/passwd ${FULLSCREEN} ${HOST}:1
         fi
         cd - >/dev/null 2>&1
         if ask "\n\tWin-KeX session disconnected\n\tWould you like to reconnect?" "Y"; then
@@ -587,10 +592,14 @@ function run-xfdesktop() {
 
 function start-client-sl() {
     printf 'Starting Win-KeX client (SL)\n'
-    sessions-kex-sl
+    if [ "${USE_EXISTING_GUI_VARS}" != 1 ]; then
+        sessions-kex-sl
+    fi
     XFCE_DESKTOP_DISABLED="0"
     SESSION=${HOSTIP}:${XSERVSESSION}
-    export DISPLAY=${SESSION}.0
+    if [ -z "$DISPLAY" ] || [ "${USE_EXISTING_GUI_VARS}" != 1 ]; then
+        export DISPLAY=${SESSION}.0
+    fi
     export GDK_BACKEND=x11
     
     if [ "${NOWGL}" == "1" ]; then
@@ -605,7 +614,9 @@ function start-client-sl() {
         unset PULSE_SERVER
     else
         print-verbose "Sound support requested"
-        export PULSE_SERVER=tcp:${HOSTIP}
+        if [ -z "$PULSE_SERVER" ] || [ "${USE_EXISTING_GUI_VARS}" != 1 ]; then
+            export PULSE_SERVER=tcp:${HOSTIP}
+        fi
     fi
 
     ## Clean up stale sessions first
@@ -700,7 +711,7 @@ function start-sound() {
     cd /usr/lib/win-kex/pulse
     #./pulseaudio.exe -F config.pa >/dev/null 2>&1 &
     /init ./pulseaudio.exe pulseaudio.exe -F config.pa >/dev/null 2>&1 &
-    cd - >/dev/null 2>&1 &
+    cd - >/dev/null 2>&1
 }
 
 function stop-sound() {
@@ -743,6 +754,10 @@ while [[ $# -gt 0 ]]; do
             # Can be used on slower machines where the desktop takes longer than
             # 100 seconds to start. Only required on first start to enable transparency
             SLTIMEOUT=300
+            shift
+            ;;
+        --use-existing-gui-vars)
+            USE_EXISTING_GUI_VARS=1
             shift
             ;;
         # MODES:
