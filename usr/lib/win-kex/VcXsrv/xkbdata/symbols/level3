@@ -3,7 +3,7 @@
 
 // The default behaviour:
 // the right Alt key (AltGr) chooses the third symbol engraved on a key.
-default partial modifier_keys
+default  partial modifier_keys
 xkb_symbols "ralt_switch" {
   key <RALT> {
     type[Group1]="ONE_LEVEL",
@@ -30,7 +30,13 @@ partial modifier_keys
 xkb_symbols "ralt_alt" {
   key <RALT> {
     type[Group1]="TWO_LEVEL",
-    symbols[Group1] = [ Alt_R, Meta_R ]
+    type[Group2]="TWO_LEVEL",
+    type[Group3]="TWO_LEVEL",
+    type[Group4]="TWO_LEVEL",
+    symbols[Group1] = [ Alt_R, Meta_R ],
+    symbols[Group2] = [ Alt_R, Meta_R ],
+    symbols[Group3] = [ Alt_R, Meta_R ],
+    symbols[Group4] = [ Alt_R, Meta_R ]
   };
   modifier_map Mod1 { <RALT> };
 };
@@ -200,24 +206,6 @@ xkb_symbols "lsgt_switch_latch" {
   key <LSGT> {
     type[Group1]="THREE_LEVEL",
     symbols[Group1] = [ ISO_Level3_Shift, ISO_Level3_Shift, ISO_Level3_Latch ]
-  };
-  include "level3(modifier_mapping)"
-};
-
-// Number key 4 chooses third shift level when pressed in isolation.
-partial modifier_keys
-xkb_symbols "4_switch_isolated" {
-  override key <AE04> {
-    symbols[Group1] = [ ISO_Level3_Shift ]
-  };
-  include "level3(modifier_mapping)"
-};
-
-// Number key 9 chooses third shift level when pressed in isolation.
-partial modifier_keys
-xkb_symbols "9_switch_isolated" {
-  override key <AE09> {
-    symbols[Group1] = [ ISO_Level3_Shift ]
   };
   include "level3(modifier_mapping)"
 };

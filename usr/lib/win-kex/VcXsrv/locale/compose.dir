@@ -77,7 +77,6 @@ iso8859-15/Compose		en_GB.ISO8859-15
 iso8859-1/Compose		en_HK.ISO8859-1
 iso8859-1/Compose		en_IE.ISO8859-1
 iso8859-15/Compose		en_IE.ISO8859-15
-iso8859-1/Compose		en_IL.ISO8859-1
 iso8859-15/Compose		en_IN.ISO8859-15
 iso8859-1/Compose		en_JM.ISO8859-1
 iso8859-1/Compose		en_NZ.ISO8859-1
@@ -226,6 +225,8 @@ iso8859-2/Compose		sh_YU.ISO8859-2
 iso8859-2/Compose		sk_SK.ISO8859-2
 iso8859-2/Compose		sl_SI.ISO8859-2
 iso8859-2/Compose		sq_AL.ISO8859-2
+iso8859-2/Compose		sr_CS.ISO8859-2
+iso8859-5/Compose		sr_CS.ISO8859-5
 iso8859-2/Compose		sr_YU.ISO8859-2
 microsoft-cp1251/Compose	sr_YU.CP1251
 iso8859-5/Compose		sr_YU.ISO8859-5
@@ -267,7 +268,6 @@ zh_TW/Compose			zh_TW.eucTW
 iso8859-1/Compose		zu_ZA.ISO8859-1
 #
 #
-en_US.UTF-8/Compose		C.UTF-8
 en_US.UTF-8/Compose		af_ZA.UTF-8
 am_ET.UTF-8/Compose		am_ET.UTF-8
 en_US.UTF-8/Compose		ar_AA.UTF-8
@@ -289,7 +289,6 @@ en_US.UTF-8/Compose		ar_SD.UTF-8
 en_US.UTF-8/Compose		ar_SY.UTF-8
 en_US.UTF-8/Compose		ar_TN.UTF-8
 en_US.UTF-8/Compose		ar_YE.UTF-8
-en_US.UTF-8/Compose		ast_ES.UTF-8
 en_US.UTF-8/Compose		as_IN.UTF-8
 en_US.UTF-8/Compose		az_AZ.UTF-8
 en_US.UTF-8/Compose		be_BY.UTF-8
@@ -303,14 +302,13 @@ en_US.UTF-8/Compose		ca_AD.UTF-8
 en_US.UTF-8/Compose		ca_ES.UTF-8
 en_US.UTF-8/Compose		ca_FR.UTF-8
 en_US.UTF-8/Compose		ca_IT.UTF-8
-cs_CZ.UTF-8/Compose		cs_CZ.UTF-8
+en_US.UTF-8/Compose		cs_CZ.UTF-8
 en_US.UTF-8/Compose		cy_GB.UTF-8
 en_US.UTF-8/Compose		da_DK.UTF-8
 en_US.UTF-8/Compose		de_AT.UTF-8
 en_US.UTF-8/Compose		de_BE.UTF-8
 en_US.UTF-8/Compose		de_CH.UTF-8
 en_US.UTF-8/Compose		de_DE.UTF-8
-en_US.UTF-8/Compose		de_IT.UTF-8
 en_US.UTF-8/Compose		de_LI.UTF-8
 en_US.UTF-8/Compose		de_LU.UTF-8
 el_GR.UTF-8/Compose		el_CY.UTF-8
@@ -325,7 +323,6 @@ en_US.UTF-8/Compose		en_EN.UTF-8
 en_US.UTF-8/Compose		en_GB.UTF-8
 en_US.UTF-8/Compose		en_HK.UTF-8
 en_US.UTF-8/Compose		en_IE.UTF-8
-en_US.UTF-8/Compose		en_IL.UTF-8
 en_US.UTF-8/Compose		en_IN.UTF-8
 en_US.UTF-8/Compose		en_JM.UTF-8
 en_US.UTF-8/Compose		en_MT.UTF-8
@@ -426,7 +423,7 @@ en_US.UTF-8/Compose		ph_PH.UTF-8
 en_US.UTF-8/Compose		pl_PL.UTF-8
 en_US.UTF-8/Compose		pp_AN.UTF-8
 pt_BR.UTF-8/Compose		pt_BR.UTF-8
-pt_PT.UTF-8/Compose		pt_PT.UTF-8
+en_US.UTF-8/Compose		pt_PT.UTF-8
 en_US.UTF-8/Compose		ro_RO.UTF-8
 ru_RU.UTF-8/Compose		ru_RU.UTF-8
 en_US.UTF-8/Compose		ru_UA.UTF-8
@@ -441,6 +438,7 @@ en_US.UTF-8/Compose		si_LK.UTF-8
 en_US.UTF-8/Compose		sk_SK.UTF-8
 en_US.UTF-8/Compose		sl_SI.UTF-8
 en_US.UTF-8/Compose		sq_AL.UTF-8
+sr_CS.UTF-8/Compose		sr_CS.UTF-8
 en_US.UTF-8/Compose		sr_ME.UTF-8
 en_US.UTF-8/Compose		sr_RS.UTF-8
 en_US.UTF-8/Compose		sr_YU.UTF-8
@@ -552,7 +550,6 @@ iso8859-15/Compose:		en_GB.ISO8859-15
 iso8859-1/Compose:		en_HK.ISO8859-1
 iso8859-1/Compose:		en_IE.ISO8859-1
 iso8859-15/Compose:		en_IE.ISO8859-15
-iso8859-1/Compose:		en_IL.ISO8859-1
 iso8859-15/Compose:		en_IN.ISO8859-15
 iso8859-1/Compose:		en_JM.ISO8859-1
 iso8859-1/Compose:		en_NZ.ISO8859-1
@@ -701,6 +698,8 @@ iso8859-2/Compose:		sh_YU.ISO8859-2
 iso8859-2/Compose:		sk_SK.ISO8859-2
 iso8859-2/Compose:		sl_SI.ISO8859-2
 iso8859-2/Compose:		sq_AL.ISO8859-2
+iso8859-2/Compose:		sr_CS.ISO8859-2
+iso8859-5/Compose:		sr_CS.ISO8859-5
 iso8859-2/Compose:		sr_YU.ISO8859-2
 microsoft-cp1251/Compose:	sr_YU.CP1251
 iso8859-5/Compose:		sr_YU.ISO8859-5
@@ -742,7 +741,6 @@ zh_TW/Compose:			zh_TW.eucTW
 iso8859-1/Compose:		zu_ZA.ISO8859-1
 #
 #
-en_US.UTF-8/Compose:		C.UTF-8
 en_US.UTF-8/Compose:		af_ZA.UTF-8
 am_ET.UTF-8/Compose:		am_ET.UTF-8
 en_US.UTF-8/Compose:		ar_AA.UTF-8
@@ -764,7 +762,6 @@ en_US.UTF-8/Compose:		ar_SD.UTF-8
 en_US.UTF-8/Compose:		ar_SY.UTF-8
 en_US.UTF-8/Compose:		ar_TN.UTF-8
 en_US.UTF-8/Compose:		ar_YE.UTF-8
-en_US.UTF-8/Compose:		ast_ES.UTF-8
 en_US.UTF-8/Compose:		as_IN.UTF-8
 en_US.UTF-8/Compose:		az_AZ.UTF-8
 en_US.UTF-8/Compose:		be_BY.UTF-8
@@ -778,14 +775,13 @@ en_US.UTF-8/Compose:		ca_AD.UTF-8
 en_US.UTF-8/Compose:		ca_ES.UTF-8
 en_US.UTF-8/Compose:		ca_FR.UTF-8
 en_US.UTF-8/Compose:		ca_IT.UTF-8
-cs_CZ.UTF-8/Compose:		cs_CZ.UTF-8
+en_US.UTF-8/Compose:		cs_CZ.UTF-8
 en_US.UTF-8/Compose:		cy_GB.UTF-8
 en_US.UTF-8/Compose:		da_DK.UTF-8
 en_US.UTF-8/Compose:		de_AT.UTF-8
 en_US.UTF-8/Compose:		de_BE.UTF-8
 en_US.UTF-8/Compose:		de_CH.UTF-8
 en_US.UTF-8/Compose:		de_DE.UTF-8
-en_US.UTF-8/Compose:		de_IT.UTF-8
 en_US.UTF-8/Compose:		de_LI.UTF-8
 en_US.UTF-8/Compose:		de_LU.UTF-8
 el_GR.UTF-8/Compose:		el_CY.UTF-8
@@ -800,7 +796,6 @@ en_US.UTF-8/Compose:		en_EN.UTF-8
 en_US.UTF-8/Compose:		en_GB.UTF-8
 en_US.UTF-8/Compose:		en_HK.UTF-8
 en_US.UTF-8/Compose:		en_IE.UTF-8
-en_US.UTF-8/Compose:		en_IL.UTF-8
 en_US.UTF-8/Compose:		en_IN.UTF-8
 en_US.UTF-8/Compose:		en_JM.UTF-8
 en_US.UTF-8/Compose:		en_MT.UTF-8
@@ -901,7 +896,7 @@ en_US.UTF-8/Compose:		ph_PH.UTF-8
 en_US.UTF-8/Compose:		pl_PL.UTF-8
 en_US.UTF-8/Compose:		pp_AN.UTF-8
 pt_BR.UTF-8/Compose:		pt_BR.UTF-8
-pt_PT.UTF-8/Compose:		pt_PT.UTF-8
+en_US.UTF-8/Compose:		pt_PT.UTF-8
 en_US.UTF-8/Compose:		ro_RO.UTF-8
 ru_RU.UTF-8/Compose:		ru_RU.UTF-8
 en_US.UTF-8/Compose:		ru_UA.UTF-8
@@ -916,6 +911,7 @@ en_US.UTF-8/Compose:		si_LK.UTF-8
 en_US.UTF-8/Compose:		sk_SK.UTF-8
 en_US.UTF-8/Compose:		sl_SI.UTF-8
 en_US.UTF-8/Compose:		sq_AL.UTF-8
+sr_CS.UTF-8/Compose:		sr_CS.UTF-8
 en_US.UTF-8/Compose:		sr_ME.UTF-8
 en_US.UTF-8/Compose:		sr_RS.UTF-8
 en_US.UTF-8/Compose:		sr_YU.UTF-8

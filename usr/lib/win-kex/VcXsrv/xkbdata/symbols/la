@@ -1,6 +1,6 @@
 // Lao keymap, by Anousak Souphavanh <anousak@muanglao.com>
 
-default partial alphanumeric_keys
+default  partial alphanumeric_keys
 xkb_symbols "basic" {
 
     // This keymap describes the Lao keyboard standard,
@@ -70,11 +70,11 @@ xkb_symbols "stea" {
     // Science Technology and Environment Agency of Lao PDR
     // National University Computer and Emergency Science of Pakistan
     // International Development Research Center
-    // Caveat: assigning multiple codepoints to a single key does not
+    // Caveat: assigning multiple codepoints to a single key doesn't
     // work in XKB.  Therefore the combining codepoint assignments
     // have been omitted.
 
-    name[Group1]= "Lao (STEA)";
+    name[Group1]= "Lao (STEA proposed standard layout)";
 
     key <TLDE> { [  quotedbl,      apostrophe			]};
     key <AE01> { [ 0x1000ea2,               1,       0x1000ed1	]};

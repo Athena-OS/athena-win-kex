@@ -65,7 +65,7 @@ xkb_symbols "defaults_common" {
 
 };
 
-default partial
+partial default
 xkb_symbols "defaults" {
 
     include "sun_vndr/solaris(defaults_common)"

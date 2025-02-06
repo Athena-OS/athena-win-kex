@@ -27,7 +27,7 @@
 // of the copyright holder.
 //
 
-default partial alphanumeric_keys
+partial default alphanumeric_keys
 xkb_symbols "sun_type6" {
 
     name[Group1]="Slovak (Sun Type 6/7)";
@@ -63,7 +63,7 @@ xkb_symbols "sun_type6" {
     key <AC08>  {	[		k,         K,	lstroke 		       	  ]	};
     key <AC09>  {	[	        l,         L,	Lstroke		                  ]	};
     key <AC10>  {	[     ocircumflex,  quotedbl,	dollar		                  ]	};
-    key <AC11>  {	[         section,    exclam,	ssharp,  		   U1E9E  ]	};
+    key <AC11>  {	[         section,    exclam,	ssharp   		          ]	};
     key <AC12>  {	[          ncaron, parenright,	currency,               currency  ]	};
     key <BKSL>  {	[          ncaron, parenright,	backslash,                   bar  ]	};
 

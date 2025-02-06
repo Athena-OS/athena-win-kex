@@ -9,7 +9,6 @@
 -dp----- -------- ledcaps(caps_lock)
 --p----- -------- ledcaps(group_lock)
 --p----- -------- ledcaps(shift_lock)
--dp----- -------- ledcompose(compose)
 -dp----- -------- lednum(num_lock)
 --p----- -------- lednum(group_lock)
 --p----- -------- lednum(shift_lock)

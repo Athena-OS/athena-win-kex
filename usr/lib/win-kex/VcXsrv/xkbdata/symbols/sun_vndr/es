@@ -27,7 +27,7 @@
 // of the copyright holder.
 //
 
-default partial alphanumeric_keys
+partial default alphanumeric_keys
 xkb_symbols "sun_type6" {
 
     name[Group1]="Spanish (Sun Type 6/7)";
@@ -68,12 +68,12 @@ partial alphanumeric_keys
 
 partial alphanumeric_keys
 	xkb_symbols "Sundeadkeys" {
-	include "es(basic)"
+	include "es(Sundeadkeys)"
 };
 
 partial alphanumeric_keys
 	xkb_symbols "sundeadkeys" {
-	include "es(basic)"
+	include "es(sundeadkeys)"
 };
 
 partial alphanumeric_keys

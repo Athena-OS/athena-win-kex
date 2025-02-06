@@ -1,4 +1,4 @@
-// Latvian keymap version 1.3
+// Latvian keymap version 1.1
 // Copyright (C) Dmitry Golubev <lastguru@mail.ru>, 2003-2004
 //
 // Reworked to get rid of dead_keys (use of which in this case
@@ -44,7 +44,7 @@
 // Latvian QWERTY layout
 // http://en.wikipedia.org/wiki/QWERTY
 //
-default partial alphanumeric_keys modifier_keys
+default  partial alphanumeric_keys modifier_keys
 xkb_symbols "basic" {
 
 	name[Group1]= "Latvian";
@@ -95,7 +95,7 @@ xkb_symbols "basic" {
 	key <AB05> {[ b,		B,		b,			B			]};
 	key <AB06> {[ n,		N,		ncedilla,		Ncedilla		]};
 	key <AB07> {[ m,		M,		m,			M			]};
-	key <AB08> {[ comma,		less,		U2022,			multiply		]}; // bullet
+	key <AB08> {[ comma,		less,		horizconnector,		multiply		]};
 	key <AB09> {[ period,		greater,	periodcentered,		division		]};
 	key <AB10> {[ slash,		question,	slash,			abovedot		]};
 	key <BKSL> {[ backslash,	bar,		grave,			breve			]};
@@ -110,23 +110,12 @@ xkb_symbols "apostrophe" {
 
 	include "lv(basic)"
 
-	name[Group1]= "Latvian (apostrophe)";
+	name[Group1]= "Latvian (apostrophe variant)";
 
 	key <AC11> {[ISO_Level3_Latch, quotedbl, apostrophe, quotedbl]};
 	key <SPCE> {[space, space, apostrophe]};
 	modifier_map Mod5 { <AC11> };
-};
 
-partial alphanumeric_keys modifier_keys
-xkb_symbols "apostrophe-deadquotes" {
-
-	include "lv(basic)"
-
-	name[Group1]= "Latvian (apostrophe, dead quotes)";
-
-	key <AC11> {[ISO_Level3_Latch, ISO_Level3_Latch, apostrophe, quotedbl]};
-	key <SPCE> {[space, space, apostrophe, quotedbl]};
-	modifier_map Mod5 { <AC11> };
 };
 
 partial alphanumeric_keys modifier_keys
@@ -134,11 +123,12 @@ xkb_symbols "tilde" {
 
 	include "lv(basic)"
 
-	name[Group1]= "Latvian (tilde)";
+	name[Group1]= "Latvian (tilde variant)";
 
 	key <TLDE> {[ISO_Level3_Latch, asciitilde, grave, acute]};
 	key <SPCE> {[space, space, asciitilde]};
 	modifier_map Mod5 { <TLDE> };
+
 };
 
 partial alphanumeric_keys modifier_keys
@@ -146,11 +136,12 @@ xkb_symbols "fkey" {
 
 	include "lv(basic)"
 
-	name[Group1]= "Latvian (F)";
+	name[Group1]= "Latvian (F variant)";
 
 	key <AC04> {[ISO_Level3_Latch, ISO_Level3_Latch, f, F]};
 	key <SPCE> {[space, space, f, F]};
 	modifier_map Mod5 { <AC04> };
+
 };
 
 //============================================================================
@@ -318,8 +309,8 @@ xkb_symbols "modern" {
 	key <AB04> {[ v,		V,		bar,		V			]};
 	key <AB05> {[ w,		W,		backslash,	W			]};
 	key <AB06> {[ f,		F,		period,		F			]};
-	key <AB07> {[ y,		Y,		U0233,		U0232			]};
-	key <AB08> {[ h,		H,		U1E29,		U1E28			]};
+	key <AB07> {[ y,		Y,		slash,		Y			]};
+	key <AB08> {[ h,		H,		U263A,		U2639			]};
 	key <AB09> {[ comma,		semicolon,	less,		multiply		]};
 	key <AB10> {[ period,		colon,		greater,	division		]};
 	key <SPCE> {[ space,		space,		apostrophe				]};
@@ -338,7 +329,7 @@ xkb_symbols "modern" {
 partial alphanumeric_keys modifier_keys
 xkb_symbols "dvorak" {
 
-	name[Group1]= "Latvian (Dvorak)";
+	name[Group1]= "Latvian (US Dvorak)";
 
 	key <TLDE> {[ asciitilde,	grave,		acute,			asciitilde		]};
 	key <AE01> {[ 1,		exclam,		onesuperior,		exclamdown		]};
@@ -402,11 +393,12 @@ xkb_symbols "ykeydvorak" {
 
 	include "lv(dvorak)"
 
-	name[Group1]= "Latvian (Dvorak, with Y)";
+	name[Group1]= "Latvian (US Dvorak, Y variant)";
 
 	key <AD05> {[ISO_Level3_Latch, ISO_Level3_Latch, y, Y]};
 	key <SPCE> {[space, space, y, Y]};
 	modifier_map Mod5 { <AD05> };
+
 };
 
 partial alphanumeric_keys modifier_keys
@@ -414,11 +406,12 @@ xkb_symbols "minuskeydvorak" {
 
 	include "lv(dvorak)"
 
-	name[Group1]= "Latvian (Dvorak, with minus)";
+	name[Group1]= "Latvian (US Dvorak, minus variant)";
 
 	key <AC11> {[ISO_Level3_Latch, ISO_Level3_Latch, minus, underscore]};
 	key <SPCE> {[space, space, minus, underscore]};
 	modifier_map Mod5 { <AR11> };
+
 };
 
 //============================================================================
@@ -430,7 +423,7 @@ xkb_symbols "dvorakprogr" {
 
 	include "lv(dvorak)"
 
-	name[Group1]= "Latvian (programmer Dvorak)";
+	name[Group1]= "Latvian (programmer US Dvorak)";
 
 	key <TLDE> {[ dollar,		asciitilde,	EuroSign,		cent			]};
 	key <AE01> {[ ampersand,	percent,	acute,			asciitilde		]};
@@ -459,11 +452,12 @@ xkb_symbols "ykeydvorakprogr" {
 
 	include "lv(dvorakprogr)"
 
-	name[Group1]= "Latvian (programmer Dvorak, with Y)";
+	name[Group1]= "Latvian (programmer US Dvorak, Y variant)";
 
 	key <AD05> {[ISO_Level3_Latch, ISO_Level3_Latch, y, Y]};
 	key <SPCE> {[space, space, y, Y]};
 	modifier_map Mod5 { <AD05> };
+
 };
 
 partial alphanumeric_keys modifier_keys
@@ -471,11 +465,12 @@ xkb_symbols "minuskeydvorakprogr" {
 
 	include "lv(dvorakprogr)"
 
-	name[Group1]= "Latvian (programmer Dvorak, with minus)";
+	name[Group1]= "Latvian (programmer US Dvorak, minus variant)";
 
 	key <AC11> {[ISO_Level3_Latch, ISO_Level3_Latch, minus, underscore]};
 	key <SPCE> {[space, space, minus, underscore]};
 	modifier_map Mod5 { <AC11> };
+
 };
 
 //============================================================================
@@ -487,7 +482,7 @@ xkb_symbols "colemak" {
 
 	include "lv(basic)"
 
-	name[Group1]= "Latvian (Colemak)";
+	name[Group1]= "Latvian (US Colemak)";
 
 	key <AD03> {[ f,		F,		f,			F			]};
 	key <AD04> {[ p,		P,		p,			P			]};
@@ -517,11 +512,12 @@ xkb_symbols "apostrophecolemak" {
 
 	include "lv(colemak)"
 
-	name[Group1]= "Latvian (Colemak, with apostrophe)";
+	name[Group1]= "Latvian (US Colemak, apostrophe variant)";
 
 	key <AC11> {[ISO_Level3_Latch, quotedbl, apostrophe, quotedbl]};
 	key <SPCE> {[space, space, apostrophe]};
 	modifier_map Mod5 { <AC11> };
+
 };
 
 partial alphanumeric_keys

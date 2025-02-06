@@ -1,4 +1,4 @@
-default partial xkb_types "default" {
+partial default xkb_types "default" {
 
     // Some types that are necessary
     // for a full implementation of

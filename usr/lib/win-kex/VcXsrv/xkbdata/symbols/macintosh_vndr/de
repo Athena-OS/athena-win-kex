@@ -42,9 +42,7 @@ xkb_symbols "basic" {
     key <AC11> {	[ adiaeresis,	Adiaeresis,  dead_circumflex		]	};
 
     key <LSGT> {	[      less,	greater,        bar			]	};
-    key <AB01> {	[	  y,	Y,  guillemotleft, less		]	};
-    key <AB04> {    [         v,    V, doublelowquotemark, leftsinglequotemark ]    };
-    key <AB05> {    [         b,    B, rightdoublequotemark, leftdoublequotemark ]  };
+    key <AB01> {	[	  y,	Y,  guillemotleft,less		]	};
     key <AB06> {	[         n,    N, asciitilde			]	};
     key <AB07> {	[	  m,	M, 	 mu			]	};
     key <AB08> {	[     comma,	semicolon	]	};
@@ -62,14 +60,14 @@ xkb_symbols "Sundeadkeys" {
     include "macintosh_vndr/de(basic)"
     name[Group1]= "Germany - Mac, Sun dead keys";
 
-    key <TLDE> {[ dead_circumflex, degree,      notsign         ]};
-    key <AE12> {[      dead_acute, dead_grave,  dead_cedilla    ]};
-    key <AD11> {[      udiaeresis, Udiaeresis,  dead_diaeresis  ]};
-    key <AD12> {[            plus, asterisk,    dead_tilde,     dead_macron ]};
-    key <AC10> {[      odiaeresis, Odiaeresis,  dead_acute      ]};
-    key <AC11> {[      adiaeresis, Adiaeresis,  dead_circumflex ]};
+    key <TLDE> {	[ SunFA_Circum,	degree,      notsign 			]	};
+    key <AE12> {	[ SunFA_Acute,	SunFA_Grave, SunFA_Cedilla		]	};
+    key <AD11> {	[ udiaeresis,	Udiaeresis,  SunFA_Diaeresis		]	};
+    key <AD12> {	[       plus,	asterisk,    SunFA_Tilde,  dead_macron	]	};
+    key <AC10> {	[ odiaeresis,	Odiaeresis,  SunFA_Acute		]	};
+    key <AC11> {	[ adiaeresis,	Adiaeresis,  SunFA_Circum		]	};
 
-    key <BKSL> {[      numbersign, acute,       dead_grave      ]};
+    key <BKSL> {	[ numbersign,	acute,       SunFA_Grave		]	};
 };
 
 partial alphanumeric_keys 
@@ -81,7 +79,7 @@ partial alphanumeric_keys
 xkb_symbols "nodeadkeys" {
     // modify the default German layout to not have any dead keys
     include "macintosh_vndr/de(basic)"
-    name[Group1]= "Germany - Mac, no dead keys";
+    name[Group1]= "Germany - Mac, eliminate dead keys";
 
     key <TLDE> {	[ asciicircum,	degree,    notsign 			]	};
     key <AE12> {	[ acute,	grave,  cedilla				]	};

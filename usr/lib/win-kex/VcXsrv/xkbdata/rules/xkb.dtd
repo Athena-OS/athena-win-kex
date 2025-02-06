@@ -1,3 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
 <!--
 
   Description: XKB configuration file DTD
@@ -30,7 +32,7 @@
 
 <!ELEMENT option (configItem)>
 
-<!ELEMENT configItem (name,shortDescription?,description?,vendor?,countryList?,languageList?,hwList?)>
+<!ELEMENT configItem (name,shortDescription*,description*,vendor?,countryList?,languageList?,hwList?)>
 
 <!ATTLIST configItem
           popularity (standard|exotic) "standard">
